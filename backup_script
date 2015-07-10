@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# Скрипт для проверки подключение облака, создания бэкапов и удаления старых архиов за +30 дней
+
+date=`date +%Y%m%d` # Стандартное обозначение даты
+bk='/var/backup/' # Расположение бэкапов
+vh=`ls /home/somename/work` # Показывает содержимое рабочей папки
+path='/home/somename/work' # Рабочая папка
+FIND="/usr/bin/find" # Путь до команды find
+RM="/bin/rm" # Путь до команды rm
+XARGS="/usr/bin/xargs" # Путь до утилиты xargs
+TIME1="30" # Параметр времени
+
+# Само чудо технологий 
+ 
+# Если облако подключено, то выдаем - mounted
+if cat /proc/mounts | grep -F "$bk" > /dev/null; then
+  echo " Is mounted"
+else
+  echo " Is not mounted"
+fi
+
+# Тут у нас будет цикл на архивирование
+for n in $vh;
+  do
+/usr/bin/tar -zcvf $bk$n-$date.tar.gz $path$n > /dev/null 2>&1;
+  echo "backup $n $date `du -sh $bk$n-$date.tar.gz | awk '{print $1}'` done"
+done
+ 
+do
+$FIND $bk -type f -mtime +$TIME1 -print0 | $XARGS -0 $RM -f # поиск и удаление
+done
